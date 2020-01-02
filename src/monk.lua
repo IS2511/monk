@@ -1,65 +1,54 @@
 --[[
   Peer-to-Peer network (github.com/IS2511/monk)
-  Node program for monk.
+  Main API for monk.
 
   Written by IS2511
 ]]--
 
-
-local monk = require("monk")
-
-local tty = require("tty") -- tty.clear()
 local io = require("io")
-local fs = require("filesystem")
 local event = require("event")
-local thread = require("thread")
 local ser = require("serialization")
 local m = require("component").modem
 local d = require("component").data
 
+local PORT = {
+  main = 500,
+  ping = 501,
+  service = 510
+}
 
-local rootDirName = '/node'
-local messageDirName = rootDirName..'/msg'
--- local vbufSize = 8192
 
-
-
-local nodeFriends = {}
 local addressBook = {}
-
-local messageStack = {} -- Message hash in received order (works like a stack)
-
-local config = {}
+local state = {
+  serviceRunning = false,
+  online = false,
+  network = "",
+  friends = {}
+}
+local config = {
+  scan = {
+    enable = true,
+    delay = 60,
+    radius = 400
+  },
+  network = {
+    autoconnect = true,
+    filter = "*"
+  },
+  lowEnergyPercent = 0
+}
 
 
 
 function init ()
 
-  if fs.exists(rootDirName) then
-    if not fs.isDirectory(rootDirName) then
-      fs.remove(rootDirName)
-      fs.makeDirectory(rootDirName)
-    end
-  else
-    fs.makeDirectory(rootDirName)
-  end
-
-  if fs.exists(messageDirName) then
-    if not fs.isDirectory(messageDirName) then
-      fs.remove(messageDirName)
-      fs.makeDirectory(messageDirName)
-    end
-  else
-    fs.makeDirectory(messageDirName)
-  end
-
   local config_file, err = io.open(rootDirName.."/config.lua", "r")
 
-  local result, err = pcall()
+  local result, err = pcall(ser.unserialize(config_file))
 
-  m.open(PORT.service)  -- Service PORT
-  m.open(PORT.ping)     -- Ping PORT
   m.open(PORT.main)     -- Main PORT
+  m.open(PORT.ping)     -- Ping PORT
+  m.open(PORT.service)  -- Service PORT
 
 end
 

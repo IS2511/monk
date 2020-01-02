@@ -1,6 +1,6 @@
 function start ()
-  local x = require("p2p")
-  if not x.start() then
+  local monk = require("monk")
+  if not monk.start() then
     io.stderr:write("Service is already running\n")
     return 1
   end
@@ -8,11 +8,11 @@ function start ()
 end
 
 function stop ()
-  local x = require("p2p")
-  x.stop()
+  local monk = require("monk")
+  monk.stop()
 end
 
 -- function restart ()
---   local x = require("oc-p2p")
---   x.restart()
+--   local monk = require("monk")
+--   monk.restart()
 -- end
