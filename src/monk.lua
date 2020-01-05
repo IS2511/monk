@@ -6,10 +6,14 @@
 ]]--
 
 local io = require("io")
+local fs = require("filesystem")
 local event = require("event")
+local thread = require("thread")
 local ser = require("serialization")
-local m = require("component").modem
-local d = require("component").data
+local com = require("component")
+local m = com.modem
+local gpu = com.gpu
+local d, datacardAvailable = false, false
 
 local PORT = {
   main = 500,
@@ -19,11 +23,23 @@ local PORT = {
 
 
 local addressBook = {}
+-- Example: {
+--   ["34eb7b28-14d3-4767-b326-dd1609ba92e"] = {
+--     cypher = "AES",
+--     public = "key data here"
+--   },
+--   ["12345678-1234-1234-1234-123456789ab"] = true
+-- }
+local threads = {
+  service = false,
+  scan = false
+}
 local state = {
   serviceRunning = false,
   online = false,
   network = "",
-  friends = {}
+  friends = {},
+  lastScan = 0
 }
 local config = {
   scan = {
@@ -33,26 +49,99 @@ local config = {
   },
   network = {
     autoconnect = true,
-    filter = "*"
+    trusted = {}
   },
+  doGeneralMessages = true,
   lowEnergyPercent = 0
 }
 
 
 
-function init ()
+-- Utils
 
-  local config_file, err = io.open(rootDirName.."/config.lua", "r")
+function Warn (str)
+  gpu.setForeground(0xFFFF00)
+  io.write(str)
+  gpu.setForeground(0xFFFFFF)
+end
+
+function Green (str)
+  gpu.setForeground(0x00FF00)
+  io.write(str)
+  gpu.setForeground(0xFFFFFF)
+end
+
+
+-- Config load
+
+function loadConfig ()
+  if not fs.exists("/etc/monk.cfg") then
+    if status.serviceRunning then error("No config found!") end
+    Warn("No config found! Writing default...\n")
+    local file = io.open("/etc/monk.cfg", "w")
+    file:write(ser.serialize(config))
+    file:close()
+  end
+
+  local config_file, err = io.open("/etc/monk.cfg", "r")
+  if not config_file then error(err) end
 
   local result, err = pcall(ser.unserialize(config_file))
+  if not result then error(err) end
 
-  m.open(PORT.main)     -- Main PORT
-  m.open(PORT.ping)     -- Ping PORT
-  m.open(PORT.service)  -- Service PORT
+  return result
+end
+
+
+-- rc.lua functions
+
+function rehash(starting)
+
+  if not starting and not status.serviceRunning then
+    print("Service is not running! Just checking config structure...")
+    loadConfig()
+    Green("All OK!\n")
+    return
+  end
+
+  loadConfig()
+
+  if config.scan.enable then
+    --body...
+  end
 
 end
 
--- function pingNeighbours ()
+function start ()
+  if status.serviceRunning then return false end
+  datacardAvailable = com.isAvailable("data")
+  if datacardAvailable then d = com.data
+  else Warn("No data card available! Some functions are disabled!\n") end
+
+  for k,v in pairs(PORT) do
+    if not m.open(v) then
+      print("Port "..v.." is already open! Continue? [Y/n]")
+      local answer = io.read("*l")
+      if answer == "n" then error("Interrupted by user") end
+    end
+  end
+
+  rehash(true)
+
+  status.serviceRunning = true
+end
+
+
+function stop ()
+
+
+  status.online = false
+  status.serviceRunning = false
+end
+
+
+-- Node functions
+
 function scan ()
   for k, v in pairs(nodeFriends) do
     if not v.ping then
