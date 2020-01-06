@@ -24,7 +24,7 @@ pastebin run ???
 
 Config is stored in `/etc/monk.cfg`. Default config:
 
-```
+```Lua
 {
   scan = {
     enable = true,
@@ -80,7 +80,6 @@ Those are the only strictly reserved ports, `monk` can be used on any port.
   - `dst`: Destination hardware address
   - `time`: When was this sent (optional?)
   - `encryption`: Table. See [encryption](#encryption) for more info
-    - `m`: `?`, `!` or `-`
     - `cipher`: `AES`, other may be coming later
     - `iv`: If `AES` then iv is here.
   - `signature`: If signed.
@@ -102,7 +101,6 @@ It looks just like the general packet but actually can be in any form. These pac
   - `dst`: Destination hardware address
   - `time`: When was this sent (optional?)
   - `encryption`: Table. See [encryption](#encryption) for more info
-    - `m`: `?`, `!` or `-`
     - `cipher`: `AES`, other may be coming later
     - `iv`: If `AES` then iv is here.
   - `signature`: If signed.
@@ -110,24 +108,62 @@ It looks just like the general packet but actually can be in any form. These pac
 
 ### Encryption
 
-There is 1 encryption method available right now: AES.
+You generally need a **tier-3 data card** at both ends! No data card required for transfer nodes though. More info in [Key exchange](#key-exchange)
+
+There is 1 encryption method available right now: [AES](#aes).
 
 #### AES
 
-To create a key pair you need a tier-3 data card. To generate a Diffie-Hellman shared key (used for encrypting and decrypting) you need a tier-3 data card, again. BUT, technically after you saved the shared key you can use it with a tier-2 data card, without signing capabilities of course. Anyway, I won't do all this and just say: **You need a tier-3 data card to use AES encryption!**
 
-There are 2 messages to a successful handshake:
-
-###### First looks like this (A -> B). Request
-  - `encryption`: Table. Only present if needed
-    - `m`: `?`
-    - `cipher`: `AES`
-    - `public`: Public key of host A
-
-###### Second looks like this (B -> A). Response
-  - `encryption`: Table. Only present if needed
-    - `m`: `!`
-    - `cipher`: `AES`
-    - `public`: Public key of host B
+More info in [Key exchange](#key-exchange)
 
 ### Signing
+
+You generally need a **tier-3 data card** at both ends! No data card required for transfer nodes though. Yes, same as encrypting. More info in [Key exchange](#key-exchange)
+
+There is 1 signing method available right now: [DSA](#dsa).
+
+#### DSA
+
+
+
+### Key exchange
+
+To create a key pair you need a tier-3 data card. To generate a Diffie-Hellman shared key (used for encrypting and decrypting) you need a tier-3 data card, again. BUT, technically after you saved the shared key you can use it with a tier-2 data card, without signing capabilities of course. Anyway, I won't do all this and just say: **You need a tier-3 data card to use AES encryption or DSA signing!** I am however thinking about organizing a UUID list with nodes trusted for shared key generation and/or key pair generation. This seems like a doable idea, but for now the main thing isn't finished yet so it's a low priority.
+
+Keys are stored in the address book among with 2 tables of supported ciphers and signing methods.
+
+```Lua
+addressBook = {
+  ["34eb7b28-14d3-4767-b326-dd1609ba92e"] = {
+    cipher = {"AES"},
+    sign = {"DSA"},
+    public = "key data here"
+  },
+  ["12345678-1234-1234-1234-123456789ab"] = true
+}
+```
+
+Only the interesting part is shown, `payload` is optional. There are 2 messages to a successful handshake:
+
+###### Request (A -> B)
+- `header`: Protocol data, addresses, etc. Serialized table
+  - `key`: Table. Only present if needed
+    - `m`: `?`
+    - `cipher`: Table of supported cipher methods
+    - `sign`: Table of supported sign methods
+    - `public`: Public key of `hostA`
+
+###### Response (B -> A)
+- `header`: Protocol data, addresses, etc. Serialized table
+  - `key`: Table. Only present if needed
+    - `m`: `!`
+    - `cipher`: Table of supported cipher methods
+    - `sign`: Table of supported sign methods
+    - `public`: Public key of `hostB`
+
+The response can be be actually sent without request just to change the public key. If key from `hostB` on `hostA` is lost or expired, `hostA` will request a new one from `hostB`. If `hostA` lost its private key or just wants to disable encrypting/signing, then it will broadcast to everyone:
+
+- `header`: Protocol data, addresses, etc. Serialized table
+  - `key`: Table. Only present if needed
+    - `m`: `-`

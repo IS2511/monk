@@ -25,7 +25,8 @@ local PORT = {
 local addressBook = {}
 -- Example: {
 --   ["34eb7b28-14d3-4767-b326-dd1609ba92e"] = {
---     cypher = "AES",
+--     cipher = {"AES"},
+--     sign = {"DSA"},
 --     public = "key data here"
 --   },
 --   ["12345678-1234-1234-1234-123456789ab"] = true
@@ -140,6 +141,31 @@ function stop ()
 end
 
 
+-- Message functions
+
+function packAES (data, key, hash)
+  local serializedData = ser.serialize(data)
+  local encryptedData = d.encrypt(serializedData, key, hash:sub(1, 4))
+  return { data = encryptedData, hash = hash }
+end
+
+function unpackAES (data, key, hash)
+  local serializedData = d.decrypt(data, key, hash:sub(1, 4))
+  return { data = ser.unserialize(serializedData), hash = ( payload.hash == d.sha256(serializedData) ) }
+end
+
+function packDSA (data, key, hash)
+  local serializedData = ser.serialize(data)
+  local encryptedData = d.encrypt(serializedData, key, hash:sub(1, 4))
+  return { data = encryptedData, hash = hash }
+end
+
+function unpackDSA (data, key, hash)
+  local serializedData = d.decrypt(data, key, hash:sub(1, 4))
+  return { data = ser.unserialize(serializedData), hash = ( payload.hash == d.sha256(serializedData) ) }
+end
+
+
 -- Node functions
 
 function scan ()
@@ -151,18 +177,6 @@ function scan ()
   end
   m.setStrength(400) -- 400 is max
   m.broadcast(PORT.ping, ser.serialize({m="?"}))
-end
-
-function packAES (data, key)
-  local serializedData = ser.serialize(data)
-  local hash = d.sha256(serializedData)
-  local encryptedData = d.encrypt(serializedData, key, hash:sub(1, 4))
-  return { data = encryptedData, hash = hash }
-end
-
-function unpackAES (payload, key)
-  local serializedData = d.decrypt(payload.data, key, payload.hash:sub(1, 4))
-  return { data = ser.unserialize(serializedData), hash = ( payload.hash == d.sha256(serializedData) ) }
 end
 
 
