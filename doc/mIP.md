@@ -75,8 +75,8 @@ Current list of protocols:
     5    | mVPN        | WIP? Ha-ha, I'm someone else (c) User
     6    | mLCB        | WIP To infinity and beyond!
     7    | mRWB        | WIP Connect multiple nets via internet
-  8-252  | Unassigned  | New protocols coming soon! (no)
- 253-254 | Testing     | Will be dropped by default
+  8\-252 | Unassigned  | New protocols coming soon! (no)
+253\-254 | Testing     | Will be dropped by default
    255   | Reserved    | Will be dropped by default
    
 Make an issue if you want your protocol here.
