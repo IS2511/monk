@@ -19,18 +19,18 @@ Everything field is aligned to bytes for simpler string operations
 (eg. `string.byte(header:sub(offset, offset+size))`).
 Every number with multiple bytes/bits is in little-endian (if I understand correctly).
 
- Name      | Size | Description
- --------- | ---- | ---
-`version`  |   1  | Protocol version, current is `mIPv1` => `1`
-`flowID`   |   3  | Unique ID, used to identify flows. See [Packet flow](#packet-flow)
-`packetID` |   3  | Unique ID, used with `flowID` for caching and loop prevention
-`flowPrev` |   3  | `packetID` of previous packet in flow. See [Packet flow](#packet-flow)
-`protocol` |   1  | Protocol of next item in `modem.send()`. See [Protocols](#protocols)
-`hopLimit` |   1  | -1 every hop, 0 => packet dies (unless on dst)
-`flags`    |   1  | `END`, `DNF`, ???
-`src`      |  36  | Source modem address
-`dst`      |  36  | Destination modem address
-`options`  | 1-3  | Destination modem address
+| Name       | Size | Description
+| ---------- | ---- | ---
+| `version`  |   1  | Protocol version, current is `mIPv1` => `1`
+| `flowID`   |   3  | Unique ID, used to identify flows. See [Packet flow](#packet-flow)
+| `packetID` |   3  | Unique ID, used with `flowID` for caching and loop prevention
+| `flowPrev` |   3  | `packetID` of previous packet in flow. See [Packet flow](#packet-flow)
+| `protocol` |   1  | Protocol of next item in `modem.send()`. See [Protocols](#protocols)
+| `hopLimit` |   1  | -1 every hop, 0 => packet dies (unless on dst)
+| `flags`    |   1  | `END`, `DNF`, ???
+| `src`      |  36  | Source modem address
+| `dst`      |  36  | Destination modem address
+| `options`  | 1-3  | Destination modem address
 
 Total size: 1 + 3\*3 + 3 + 36\*2 + 2 (modem string overhead) = 87
 
@@ -54,7 +54,7 @@ End of the flow is indicated by the `END` [flag](#flags).
 
 The 3 bytes for `packetID` and `flowID` are generated like this:
 ```lua
-function genID()
+local function genID()
   local x = math.random(1, 16777216) -- (2^8)^3
   return string.char(x%255, math.floor((x/255)%255), math.floor((x/65025)%255))
 end
@@ -65,20 +65,20 @@ Make an issue if you know a **better method**!
 ### Protocols
 Current list of protocols:
 
- `protocol` | Name     | Description
- ------- | ----------- | ---
-    0    | Unknown     | Why though?
-    1    | mICMP       | Forming OC Internet since 2020
-    2    | mTCP        | 
-    3    | mUDP        | 
-    4    | mMBCP       | WIP Wrap around vanilla OC messages
-    5    | mVPN        | WIP? Ha-ha, I'm someone else (c) User
-    6    | mLCB        | WIP To infinity and beyond!
-    7    | mRWB        | WIP Connect multiple nets via internet
-  8\-252 | Unassigned  | New protocols coming soon! (no)
-253\-254 | Testing     | Will be dropped by default
-   255   | Reserved    | Will be dropped by default
-   
+| `protocol` | Name     | Description
+| ------: | ----------- | ---
+|       0 | Unknown     | Why though?
+|       1 | mICMP       | Forming OC Internet since 2020
+|       2 | mTCP        | 
+|       3 | mUDP        | 
+|       4 | mMBCP       | WIP Wrap around vanilla OC messages
+|       5 | mVPN        | WIP? Ha-ha, I'm someone else (c) User
+|       6 | mLCB        | WIP To infinity and beyond!
+|       7 | mRWB        | WIP Connect multiple nets via internet
+|   8-252 | Unassigned  | New protocols coming soon! (no)
+| 253-254 | Testing     | Will be dropped by default
+|     255 | Reserved    | Will be dropped by default
+
 Make an issue if you want your protocol here.
 
 ### Path discovery
