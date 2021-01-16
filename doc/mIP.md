@@ -7,7 +7,7 @@ You probably won't notice this library and probably shouldn't use it
 unless you are developing new network protocols and/or technology.
 
 ## Header structure
-Low-level `modem.send` call looks something like this:\
+Low-level `modem.send()` call looks something like this:\
 `modem.send(address, port, header: string, ...)`\
 The 2 interesting things are:
 - `header`: structured string, used for routing (duh)
@@ -24,8 +24,8 @@ Every number with multiple bytes/bits is in little-endian (if I understand corre
 | `version`  |   1  | Protocol version, current is `mIPv1` => `1`
 | `flowID`   |   3  | Unique ID, used to identify flows. See [Packet flow](#packet-flow)
 | `packetID` |   3  | Unique ID, used with `flowID` for caching and loop prevention
-| `flowPrev` |   3  | `packetID` of previous packet in flow. See [Packet flow](#packet-flow)
-| `protocol` |   1  | Protocol of next item in `modem.send()`. See [Protocols](#protocols)
+| `prevID`   |   3  | `packetID` of previous packet in flow. See [Packet flow](#packet-flow)
+| `proto`    |   1  | Protocol of next item in `modem.send()`. See [Protocols](#protocols)
 | `hopLimit` |   1  | -1 every hop, 0 => packet dies (unless on `dst`)
 | `flags`    |   1  | Bitmask, `END`, `DNF`, ???
 | `src`      |  36  | Source modem address
@@ -70,9 +70,10 @@ The lua random generator seed is distinct for every computer (as far as I know).
 Make an issue if you know a **better method**!
 
 ### Protocols
+
 Current list of protocols:
 
-| `protocol` | Name     | Description
+| `proto` | Name        | Description
 | ------: | ----------- | ---
 |       0 | Unknown     | Why though?
 |       1 | mICMP       | Forming OC Internet since 2020
@@ -101,18 +102,24 @@ Make an issue if you want your protocol here.
 - Cache local neighbours?
 - Send Route Discovery packet or something (A searches D)
 - Receive answer with route? A -> B -> C -> D
-  | dst A | dst B | dst C | dst D |
-A |   -   |   B*  |   B   |   B   |
-B |   A*  |   -   |   C*  |   C   |
-C |   B   |   B*  |   -   |   D*  |
-D |   C   |   C   |   C*  |   -   |
-* Can be cached? They are neighbours, maybe instantly
+
+| - | dst A | dst B | dst C | dst D |
+| --- | --- | ----- | ----- | --- 
+| A |   -   |   B*  |   B   |   B   |
+| B |   A*  |   -   |   C*  |   C   |
+| C |   B   |   B*  |   -   |   D*  |
+| D |   C   |   C   |   C*  |   -   |
+\* Can be cached? They are neighbours, maybe instantly
+
 No neighbours:
-  | dst A | dst B | dst C | dst D |
-A |   -   |       |   B   |   B   |
-B |       |   -   |       |   C   |
-C |   B   |       |   -   |       |
-D |   C   |   C   |       |   -   |
+
+| - | dst A | dst B | dst C | dst D |
+| --- | --- | ----- | ----- | ---
+| A |   -   |       |   B   |   B   |
+| B |       |   -   |       |   C   |
+| C |   B   |       |   -   |       |
+| D |   C   |   C   |       |   -   |
+
 ]]--
 
 -- TODO: Return header hash/"hash"? To confirm identity
@@ -120,6 +127,24 @@ D |   C   |   C   |       |   -   |
 -- TODO: You are a client? Just broadcast ping and connect with nearest pong
 -- Server pongs every request from client? Must(?) if on move (tablet or etc.)
 -- And then communicate like there is no such thing as distance ;)
+
+### The Book
+
+```Lua
+book = {
+  ["34eb7b28-14d3-4767-b326-dd1609ba92e"] = {
+    online = true,
+    friends = {},
+    cipher = {"AES"},
+    sign = {"DSA"},
+    public = "key data here"
+  },
+  ["12345678-1234-1234-1234-123456789ab"] = {
+    online = true,
+    friends = {}
+  }
+}
+```
 
 -- TODO: Call modem.send() last in tick, form send queue?
 

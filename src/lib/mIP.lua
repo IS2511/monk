@@ -6,11 +6,26 @@
   Author: IS2511
 ]]--
 
+local util = require("monk-util")
+local config = require("monk-config")
 local event = require("event")
+
+local mIP = {
+  _name = "mIP",
+  _version = 1,
+  _proto = 0,
+  _init = false,
+  defaultConfig = {
+    default = {
+      hopLimit = 64
+    }
+  },
+  config = {}
+}
 
 local MAX_PACKET_SIZE = 4096+2048+1024 -- ~140 Kbps, fuck
 
-local config_ipbook = {
+local config_ipbook = { -- TODO: Clean this all up
   enable = true, -- If false every message will be broadcast (Just like zn!)
   volumeSpreadMethod = "even", -- even/priority (sorted from small to big)
   volumes = { -- These all actually store 1 book, just divided in volumes
@@ -62,6 +77,57 @@ local config_ipbook = {
 }
 
 local ipbook = {}
+
+
+local function genID()
+  local x = math.random(1, 16777216) -- (2^8)^3
+  return string.char(x%256, math.floor((x/256)%256), math.floor((x/65536)%256))
+end
+
+local function headerParse(header)
+  local format = {
+    { l = 1,  type = "number",  name = "version" },
+    { l = 3,  type = "string",  name = "flowID" },
+    { l = 3,  type = "string",  name = "packetID" },
+    { l = 3,  type = "string",  name = "prevID" },
+    { l = 1,  type = "number",  name = "proto" },
+    { l = 1,  type = "number",  name = "hopLimit" },
+    { l = 1,  type = "bitmask", name = "flags" },
+    { l = 36, type = "string",  name = "src" },
+    { l = 36, type = "string",  name = "dst" },
+    --{ l = 3,  type = "string", name = "options" },
+  }
+  return util.stringParse(format, header)
+end
+
+local function headerConstruct(t)
+
+  local s = ""
+  s = s + t.version or string.char(mIP._version)
+  s = s + t.flowID or string.char(0, 0, 0)
+  s = s + t.packetID or genID()
+  s = s + t.prevID or string.char(0, 0, 0)
+  s = s + t.proto or string.char(mIP._proto)
+  s = s + t.hopLimit or string.char(mIP._hopLimit)
+
+
+  return s
+end
+
+
+
+function mIP.init()
+  if mIP._init then
+    return false
+  end
+  config.addDefault("proto."..mIP._name, mIP.defaultConfig)
+  mIP._init = true
+  return true
+end
+
+
+return mIP
+
 
 -- TODO: Parse headers with one string.gmatch()?
 -- Probably lines of x = header:sub()

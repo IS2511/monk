@@ -1,6 +1,4 @@
 
--- TODO: Tell CLion about OpenComputers UPDATE: Done!?
-
 local component = require("component")
 
 local modem = {}

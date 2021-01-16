@@ -50,22 +50,6 @@ local config = {
 }
 
 
-
--- Utils
-
-function Warn (str)
-  gpu.setForeground(0xFFFF00)
-  io.write(str)
-  gpu.setForeground(0xFFFFFF)
-end
-
-function Green (str)
-  gpu.setForeground(0x00FF00)
-  io.write(str)
-  gpu.setForeground(0xFFFFFF)
-end
-
-
 -- Config load
 
 function loadConfig ()
