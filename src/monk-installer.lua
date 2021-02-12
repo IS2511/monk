@@ -19,19 +19,18 @@ local function wget(url, path)
   shell.execute("wget -qf "..url.." "..path)
 end
 
-local github
-github = {
+local github = {
   base = "https://raw.githubusercontent.com/IS2511/monk/",
-  branch = "master",
-  link = function (path)
-    return github.base..github.branch.."/"..path
-  end
+  branch = "master"
 }
+github.link = function (path)
+  return github.base..github.branch.."/"..path
+end
 local deps = {
-  required = {
-    {"src/lib/monk.lua", "/usr/lib/monk.lua"},
-    {"src/lib/monk-config.lua", "/usr/lib/monk-config.lua"},
-    {"src/lib/monk-util.lua", "/usr/lib/monk-util.lua"}
+  required = { -- TODO: rewrite all requires to use monk.{lib} !!!
+    {"src/lib/monk.lua", "/usr/lib/monk/monk.lua"},
+    {"src/lib/monk-config.lua", "/usr/lib/monk/config.lua"},
+    {"src/lib/monk-util.lua", "/usr/lib/monk/util.lua"}
   },
   recommended = {
     {"src/monk.lua", "/usr/bin/monk.lua"},
