@@ -38,6 +38,7 @@ function config.parsePath(path)
   return t
 end
 
+
 function config.get(path)
   local result = config.config
   for i, v in ipairs(config.parsePath(path)) do

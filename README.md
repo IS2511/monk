@@ -12,7 +12,7 @@ Feel the freedom of not having to think about the delivery of your data.
 Installer (uses github):
 
 ```
-pastebin run ???
+pastebin run dpTDJfcV
 ```
 
 ## Commands

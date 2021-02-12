@@ -13,7 +13,6 @@ local event = require("event")
 local mIP = {
   _name = "mIP",
   _version = 1,
-  _proto = 0,
   _init = false,
   defaultConfig = {
     default = {
@@ -23,7 +22,10 @@ local mIP = {
   config = {}
 }
 
-local MAX_PACKET_SIZE = 4096+2048+1024 -- ~140 Kbps, fuck
+
+-- Max packet size in default config is 8192 bytes
+-- 8Kb per packet, 20 packets per second, ~160Kbps max
+-- 60 bytes mIP header,
 
 local config_ipbook = { -- TODO: Clean this all up
   enable = true, -- If false every message will be broadcast (Just like zn!)
@@ -107,8 +109,8 @@ local function headerConstruct(t)
   s = s + t.flowID or string.char(0, 0, 0)
   s = s + t.packetID or genID()
   s = s + t.prevID or string.char(0, 0, 0)
-  s = s + t.proto or string.char(mIP._proto)
-  s = s + t.hopLimit or string.char(mIP._hopLimit)
+  s = s + t.proto or string.char(0)
+  s = s + t.hopLimit or string.char(mIP.config.mIP)
 
 
   return s
@@ -118,7 +120,7 @@ end
 
 function mIP.init()
   if mIP._init then
-    return false
+    return false, "Already init"
   end
   config.addDefault("proto."..mIP._name, mIP.defaultConfig)
   mIP._init = true

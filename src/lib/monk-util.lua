@@ -67,6 +67,30 @@ function utils.pad(num, l, padding)
   return string.format("%"..padding..l.."d", num)
 end
 
+utils.uuid = {}
+function utils.uuid.raw(uuidString) -- 36 chars
+  -- TODO: Why "not enough memory" ???
+  uuidString = string.gsub(uuidString, "-", "")
+  local s = function (i)
+    local a, b = string.byte(string.sub(uuidString, i, i+1))
+    return string.char(16*(a-48) + (b-48))
+  end
+  local r = ""
+  for i = 1, 31, 2 do r = r..s(i) end
+  return r
+end
+function utils.uuid.hex(rawString) -- 16 bytes
+  local raw = {string.byte(rawString, 1, 16)}
+  rawString = nil
+  local r = ""
+  -- TODO: incorrect, pad only after division to 8 4 4 4 12?
+  for i = 0, 3 do -- pad hex to 8 chars for each 32 bits
+    r = r..string.format("%08x", raw[i*4+1]*16777216 + raw[i*4+2]*65536 + raw[i*4+3]*256 + raw[i*4+4])
+  end
+  local s = function (i, l) return string.sub(r, i, i+l) end
+  return s(0, 8).."-"..s(8, 4).."-"..s(12, 4).."-"..s(16, 4).."-"..s(20, 12)
+end
+
 
 function utils.bitmaskParse(input)
   local bit = require("bit32")

@@ -1,17 +1,18 @@
 # mIP - Minecraft Internet Protocol
 
 ## About
+
 This library is used by mTCP and other network protocols for packet routing.
 
-You probably won't notice this library and probably shouldn't use it
-unless you are developing new network protocols and/or technology.
+
 
 ## Header structure
+
 Low-level `modem.send()` call looks something like this:\
 `modem.send(address, port, header: string, ...)`\
 The 2 interesting things are:
-- `header`: structured string, used for routing (duh)
-- `...`: more headers/data, like mTCP
+- `header`: structured string with mIP header (and maybe more headers)
+- `...`: payload
 
 Contents of data are not relevant to us now, we'll focus on `header`.
 
@@ -23,16 +24,14 @@ Every number with multiple bytes/bits is in little-endian (if I understand corre
 | ---------- | ---- | ---
 | `version`  |   1  | Protocol version, current is `mIPv1` => `1`
 | `flowID`   |   3  | Unique ID, used to identify flows. See [Packet flow](#packet-flow)
-| `packetID` |   3  | Unique ID, used with `flowID` for caching and loop prevention
-| `prevID`   |   3  | `packetID` of previous packet in flow. See [Packet flow](#packet-flow)
-| `proto`    |   1  | Protocol of next item in `modem.send()`. See [Protocols](#protocols)
+| `header`   |   1  | Type of next header. See [Extension headers](#extension-headers)
 | `hopLimit` |   1  | -1 every hop, 0 => packet dies (unless on `dst`)
-| `flags`    |   1  | Bitmask, `END`, `DNF`, ???
-| `src`      |  36  | Source modem address
-| `dst`      |  36  | Destination modem address
-| `options`  | 1-3  | ???????????
+| `src`      |  16  | Source modem address
+| `dst`      |  16  | Destination modem address
 
-Total size: 1 + 3\*3 + 3 + 36\*2 + 2 (modem string overhead) = 87
+Total size: 1 + 3 + 1 + 1 + 16\*2 + 2 (modem string overhead) = 60
+
+
 
 ### Flags
 - `END`: This is the end of the flow. See [Packet flow](#packet-flow)
@@ -42,11 +41,22 @@ Total size: 1 + 3\*3 + 3 + 36\*2 + 2 (modem string overhead) = 87
 ## Quick FAQ
 
 - Q: Does mIP guarantee delivery?\
-  A: Nope, mTCP does (I hope)
+  A: Nothing guarantees delivery, but try mTCP
 - Q: \
   A: 
 
 ## Going deeper
+
+### Extension headers
+
+#### Fragment
+
+| Name       | Size | Description
+| ---------- | ---- | ---
+| `packetID` |   3  | Unique ID, used with `flowID` for caching and loop prevention
+| `prevID`   |   3  | `packetID` of previous packet in flow. See [Packet flow](#packet-flow)
+| `flags`    |   1  | Bitmask, `END`, `DNF`, ???
+
 
 ### Packet flow
 Concept is somewhat similar to [IPv6's Flow Label](https://en.wikipedia.org/wiki/IPv6_packet#Fixed_header)
